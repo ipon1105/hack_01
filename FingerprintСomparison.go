@@ -33,7 +33,7 @@ func isCoordsEquals(a Coord, b Coord) bool {
 
 func specialPointCompare(bBranches []Coord, bEnds []Coord, cImg [][]int) float64 {
 
-	go skeletonization(cImg)
+	skeletonization(cImg)
 	var cBranches, cEnds = findPoints(cImg)
 	cBranches, cEnds = delNoisePoint(cBranches, cEnds)
 
@@ -77,7 +77,7 @@ func matchingPoints(origin [][]Coord, target [][]Coord) float64 {
 		}
 	}
 
-	return (float64(match) / float64(all) * 100)
+	return (float64(match) / float64(all))
 }
 
 // Удаляем повторения

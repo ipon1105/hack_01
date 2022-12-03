@@ -38,12 +38,12 @@ func gabor(sigma float64, theta float64, lambda int, psi int, gamma float64) {
 	fmt.Println("gridX")
 	fmt.Println(gridX)
 
-	a, b := meshgrid(gridX, gridY)
+	//a, b := meshgrid(gridX, gridY)
 
-	fmt.Println(a + b)
-
-	x_theta := a*math.Cos(theta) + b*math.Sin(theta)
-	y_theta := -a*math.Sin(theta) + b*math.Cos(theta)
+	//fmt.Println(a + b)
+	//
+	//x_theta := a*math.Cos(theta) + b*math.Sin(theta)
+	//y_theta := -a*math.Sin(theta) + b*math.Cos(theta)
 }
 
 func meshgrid(x []int, y []int) ([][]int, [][]int) {

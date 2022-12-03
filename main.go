@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
+	"time"
 
 	"github.com/sergeymakinen/go-bmp"
 )
@@ -61,42 +63,70 @@ func FilePathWalkDir(root string) ([]string, error) {
 		return nil
 	})
 	return files, err
+
+}
+
+var wg sync.WaitGroup
+
+// Функция для многопоточности или подругому говоря для горутин
+func goroutina(branches []Coord, ends []Coord, start int, stop int, files []string) (int, float64) {
+	defer wg.Done()
+	t0 := time.Now()
+
+	var (
+		nowAccuracy  float64 = 0
+		bestAccuracy float64 = 0
+		bestFile     int     = 0
+	)
+
+	for i := start; i < stop && i < len(files); i++ {
+		f, _ := os.Open(files[i])
+		pixelArr, _ := getPixels(f)
+		nowAccuracy = specialPointCompare(branches, ends, binarization(pixelArr))
+		if bestAccuracy < nowAccuracy {
+			bestAccuracy = nowAccuracy
+			bestFile = i
+		}
+	}
+
+	t1 := time.Now()
+	fmt.Printf("accuracy: %f;\tworkTime: %v;\tfile: %s.\n", bestAccuracy, t1.Sub(t0), files[bestFile])
+	return bestFile, bestAccuracy
 }
 
 func main() {
 
-	f1, _ := os.Open("Датасет/Real/1__M_Left_index_finger.BMP")
+	THREADS := MaxParallelism() / 6
 
-	pixelArr1, _ := getPixels(f1)
-	var bBranches, bEnds = findPoints(binarization(pixelArr1))
+	targetFile, _ := os.Open("Датасет/Real/1__M_Left_index_finger.BMP")
+
+	pixelArr, _ := getPixels(targetFile)
+	var bBranches, bEnds = findPoints(binarization(pixelArr))
 	bBranches, bEnds = delNoisePoint(bBranches, bEnds)
-	f2, _ := os.Open("Датасет/Real/2__F_Left_index_finger.BMP")
-	pixelArr2, _ := getPixels(f2)
 
-	var (
-		root  string
-		files []string
-		err   error
-		i     int
-		s     string
-	)
-	i = 0
-	root = "Датасет/Real"
-	files, err = FilePathWalkDir(root)
+	root := "Датасет/Real"
+	files, err := FilePathWalkDir(root)
+
 	if err != nil {
 		panic(err)
 	}
-	for _, file := range files {
-		//fmt.Println(file)
-		f2, _ = os.Open(file)
-		pixelArr2, _ = getPixels(f2)
-		if specialPointCompare(bBranches, bEnds, binarization(pixelArr2)) == 100 {
-			s = file
+
+	length := int(math.Ceil(float64(len(files) / THREADS)))
+	for i := 0; i < THREADS; i++ {
+		wg.Add(1)
+
+		if i == 0 {
+			go goroutina(bBranches, bEnds, 0, length, files)
+			continue
 		}
+		if i == length-1 {
+			go goroutina(bBranches, bEnds, i*length+1, len(files)-1, files)
+			continue
+		}
+		go goroutina(bBranches, bEnds, i*length+1, (i+1)*length, files)
 	}
-	//fmt.Println(MaxParallelism())
-	fmt.Print(s)
-	fmt.Print("\n")
+	wg.Wait()
+	//time.Sleep(time.Minute)
 }
 
 // Поварачивать изображения
