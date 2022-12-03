@@ -9,7 +9,7 @@ const BINARY_RATION_B = float64(0.11)
 const DEL_RANGE = int(5)
 
 // Смещения для поиска точек
-const FIND_OFFSET = int(15)
+const FIND_OFFSET = int(4)
 
 // Структура содержащая в себе два числа
 type Coord struct {
@@ -30,14 +30,10 @@ func isCoordsEquals(a Coord, b Coord) bool {
 
 ////////////////////
 //Сравнение по особым точкам
-//TODO: Оптимизировать работу алгоритма.
-func specialPointCompare(bImg [][]int, cImg [][]int) (int, int) {
-	skeletonization(bImg)
-	skeletonization(cImg)
 
-	var bBranches, bEnds = findPoints(bImg)
-	bBranches, bEnds = delNoisePoint(bBranches, bEnds)
+func specialPointCompare(bBranches []Coord, bEnds []Coord, cImg [][]int) float64 {
 
+	go skeletonization(cImg)
 	var cBranches, cEnds = findPoints(cImg)
 	cBranches, cEnds = delNoisePoint(cBranches, cEnds)
 
@@ -45,7 +41,7 @@ func specialPointCompare(bImg [][]int, cImg [][]int) (int, int) {
 }
 
 // Функция сравнения
-func matchingPoints(origin [][]Coord, target [][]Coord) (int, int) {
+func matchingPoints(origin [][]Coord, target [][]Coord) float64 {
 	var all int = 0
 	var match int = 0
 
@@ -81,7 +77,7 @@ func matchingPoints(origin [][]Coord, target [][]Coord) (int, int) {
 		}
 	}
 
-	return match, all
+	return (float64(match) / float64(all) * 100)
 }
 
 // Удаляем повторения
@@ -103,7 +99,7 @@ func delNoisePoint(branchPoints []Coord, endPoints []Coord) ([]Coord, []Coord) {
 	return removeDouble(branchPoints, endList), removeDouble(endPoints, branchList)
 }
 
-// Возвращает список элементов, у которых нет одинакового в другом  списке
+// Возвращает список элементов, у которых нет одинакового в другом  списке
 func removeDouble(points []Coord, compareList []Coord) []Coord {
 	var z []Coord
 	for _, pEl := range points {
