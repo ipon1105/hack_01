@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
 
 	"github.com/sergeymakinen/go-bmp"
 )
@@ -39,9 +40,18 @@ type Pixel struct {
 	A int
 }
 
+func MaxParallelism() int {
+	maxProcs := runtime.GOMAXPROCS(0)
+	numCPU := runtime.NumCPU()
+	if maxProcs < numCPU {
+		return maxProcs
+	}
+	return numCPU
+}
+
 func main() {
 	f1, _ := os.Open("Датасет/Real/1__M_Left_index_finger.BMP")
-	f2, _ := os.Open("Датасет/Real/600__M_Right_little_finger.BMP")
+	f2, _ := os.Open("Датасет/Real/2__F_Left_index_finger.BMP")
 
 	pixelArr1, _ := getPixels(f1)
 	pixelArr2, _ := getPixels(f2)
@@ -52,6 +62,3 @@ func main() {
 //D * DPI = PIXELS_RESOLUTION
 
 //Сранение по узору
-
-//Корреляционное сравнение
-//Высокая трудоёмкость

@@ -28,6 +28,7 @@ func isCoordsEquals(a Coord, b Coord) bool {
 	return true
 }
 
+////////////////////
 //Сравнение по особым точкам
 //TODO: Оптимизировать работу алгоритма.
 func specialPointCompare(bImg [][]int, cImg [][]int) (int, int) {
@@ -177,6 +178,11 @@ func binarization(img [][]Pixel) [][]int {
 	for _, row := range img {
 		var p []int
 		for _, col := range row {
+			if col.A == 0 {
+				p = append(p, 0)
+				continue
+			}
+
 			pixel := int(float64(col.R)*BINARY_RATION_R + float64(col.G)*BINARY_RATION_G + float64(col.B)*BINARY_RATION_B)
 
 			if pixel > 128 {
@@ -232,7 +238,7 @@ func deleteMain(img [][]int) int {
 
 // Проверка на удаление
 func getTripleVector(img [][]int, x int, y int) []int {
-	var a []int
+	var a = make([]int, 9)
 	for r := y - 1; r < y+1; r++ {
 		for c := x - 1; c < x+1; c++ {
 			if r < 0 || r >= len(img) || c < 0 || c >= len(img[0]) {
