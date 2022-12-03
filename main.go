@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 	"io"
+
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/sergeymakinen/go-bmp"
 )
 
 func getPixels(file io.Reader) ([][]Pixel, error) {
+
 	img, _ := bmp.Decode(file)
 
 	bounds := img.Bounds()
@@ -49,62 +52,51 @@ func MaxParallelism() int {
 	return numCPU
 }
 
-// Функция бинаризации
-func binarization2(img [][]Pixel) [][]int {
-	var bImg [][]int
-
-	for _, row := range img {
-		var p []int
-		for _, col := range row {
-			p = append(p, int(float64(col.R)*BINARY_RATION_R+float64(col.G)*BINARY_RATION_G+float64(col.B)*BINARY_RATION_B))
+func FilePathWalkDir(root string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			files = append(files, path)
 		}
-
-		bImg = append(bImg, p)
-	}
-
-	return bImg
-}
-
-// Функция бинаризации
-func binarization3(img [][]int) {
-	for a, row := range img {
-		for b, col := range row {
-			if col > 128 {
-				img[a][b] = 1 // Чёрный
-			} else {
-				img[a][b] = 1 // Белый
-			}
-
-		}
-
-	}
-
+		return nil
+	})
+	return files, err
 }
 
 func main() {
 
 	f1, _ := os.Open("Датасет/Real/1__M_Left_index_finger.BMP")
-	//f2, _ := os.Open("Датасет/Real/1__M_Left_index_finger.BMP")
 
 	pixelArr1, _ := getPixels(f1)
-	//pixelArr2, _ := getPixels(f2)
+	var bBranches, bEnds = findPoints(binarization(pixelArr1))
+	bBranches, bEnds = delNoisePoint(bBranches, bEnds)
+	f2, _ := os.Open("Датасет/Real/2__F_Left_index_finger.BMP")
+	pixelArr2, _ := getPixels(f2)
 
-	bImg := binarization2(pixelArr1)
-	fmt.Println("bImg2")
-	fmt.Println(bImg)
-	gabor(1, 2, 3, 4, 5)
-	//fmt.Println("gabor")
-	//gaboraImagination(bImg)
-	//fmt.Println("bImg3")
-	//binarization3(bImg)
-	//fmt.Println(bImg)
-
-	//bImg := binarization(pixelArr1)
-	//skeletonization(bImg)
-	//var branches, ends = findPoints(bImg)
-	//fmt.Println(orientation(branches, ends, len(bImg[0]), len(bImg)))
-
-	//fmt.Println(specialPointCompare(binarization(pixelArr1), binarization(pixelArr2)))
+	var (
+		root  string
+		files []string
+		err   error
+		i     int
+		s     string
+	)
+	i = 0
+	root = "Датасет/Real"
+	files, err = FilePathWalkDir(root)
+	if err != nil {
+		panic(err)
+	}
+	for _, file := range files {
+		//fmt.Println(file)
+		f2, _ = os.Open(file)
+		pixelArr2, _ = getPixels(f2)
+		if specialPointCompare(bBranches, bEnds, binarization(pixelArr2)) == 100 {
+			s = file
+		}
+	}
+	//fmt.Println(MaxParallelism())
+	fmt.Print(s)
+	fmt.Print("\n")
 }
 
 // Поварачивать изображения
