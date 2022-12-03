@@ -1,116 +1,98 @@
 package main
 
 import (
+	"fmt"
 	"math"
 )
 
-//y' или yTheta
-func y1(x float64, y float64, theta float64) float64 {
-	return -x*math.Sin(theta) + y*math.Cos(theta)
+// Константы для фильтра Габора
+//const lambda = float64(1)
+//const theta = float64(2)
+//const psi = float64(3)
+//const sigma = float64(4)
+//const gamma = float64(1)
+
+// Функция Габора
+func gabor(sigma float64, theta float64, lambda int, psi int, gamma float64) {
+	sigma_x := sigma
+	sigma_y := float64(sigma) / gamma
+
+	nstds := 3
+
+	xmax := int(math.Ceil(math.Max(1, math.Max(math.Abs(float64(nstds)*sigma_x*math.Cos(theta)), math.Abs(float64(nstds)*sigma_y*math.Sin(theta))))))
+	ymax := int(math.Ceil(math.Max(1, math.Max(math.Abs(float64(nstds)*sigma_x*math.Sin(theta)), math.Abs(float64(nstds)*sigma_y*math.Cos(theta))))))
+	xmin := -xmax
+	ymin := -ymax
+
+	var gridY []int //ymin : ymax + 1
+	for i := ymin; i <= ymax+1; i++ {
+		gridY = append(gridY, i)
+	}
+	fmt.Println("gridY")
+	fmt.Println(gridY)
+
+	var gridX []int //xmin : xmax + 1
+	for i := xmin; i <= xmax+1; i++ {
+		gridX = append(gridX, i)
+	}
+	fmt.Println("gridX")
+	fmt.Println(gridX)
+
+	a, b := meshgrid(gridX, gridY)
+
+	fmt.Println(a + b)
+
+	x_theta := a*math.Cos(theta) + b*math.Sin(theta)
+	y_theta := -a*math.Sin(theta) + b*math.Cos(theta)
 }
 
-//x' или xTheta
-func x1(x float64, y float64, theta float64) float64 {
-	return x*math.Cos(theta) + y*math.Sin(theta)
-}
+func meshgrid(x []int, y []int) ([][]int, [][]int) {
 
-func filter(x float64, y float64, lambda float64, theta float64, psi float64, sigma float64, gamma float64) float64 {
-	left := math.Exp(-0.5 * (math.Pow(x1(x, y, theta), 2)/math.Pow(sigma, 2) + math.Pow(y1(x, y, theta), 2)/math.Pow(sigma/gamma, 2)))
-	right := math.Cos(2*math.Pi/lambda*x1(x, y, theta) + psi)
-	return left * right
-}
+	// Создаём динамический массив
+	var arrX = make([][]int, len(y))
+	for i, _ := range arrX {
+		arrX[i] = make([]int, len(x))
+	}
+	var arrY = make([][]int, len(y))
+	for i, _ := range arrY {
+		arrY[i] = make([]int, len(x))
+	}
 
-func filterFull(x float64, y float64, lambda float64, theta float64, psi float64, sigma float64, gamma float64) float64 {
-	left := math.Exp((-math.Pow(x1(x, y, theta), 2) + math.Pow(gamma, 2)*math.Pow(y1(x, y, theta), 2)) / (2 * math.Pow(sigma, 2)))
-	right := math.Cos(2*math.Pi*(x1(x, y, theta)/lambda) + psi)
-	return left * right
-}
-
-///////////
-
-func name(branches []Coord, ends []Coord, size_x int, size_y int) [][]int {
-	var lines []int
-	for i := 0; i < size_y; i++ {
-		for j := 0; j < size_x; j++ {
-			sum_c := 0
-			sum_d := 0
-			var z int = 0
-			for _, el := range branches {
-				if (size_y-i == el.Y) && (size_x-j == el.X) {
-					z = 1
-				}
-			}
-			for _, el := range ends {
-				if (size_y-i == el.Y) && (size_x-j == el.X) {
-					z = 1
-				}
-			}
-
-			/*
-				if(z==0)
-					for c = (1:size(cores,1))
-						sum_c = sum_c + atan(((size_y-a)-cores(c,2))/(b-cores(c,1)));
-					end
-					for c = (1:size(deltas,1))
-						sum_d = sum_d + atan(((size_y-a)-deltas(c,2))/(b-deltas(c,1)));
-					end
-					line(b) = (sum_d - sum_c)/2;
-				else
-			*/
-			if z == 0 {
-				for _, el := range branches {
-					sum_c += int(math.Atan(float64(((size_y - i) - el.Y) / (j - el.X))))
-				}
-				for _, el := range ends {
-					sum_d += int(math.Atan(float64(((size_y - i) - el.Y) / (j - el.X))))
-				}
-				lines = append(lines, (sum_d-sum_c)/2)
-
-			}
+	for j, _ := range arrX[0] {
+		for i, _ := range arrX {
+			arrX[i][j] = x[j]
+		}
+	}
+	for i, _ := range arrY {
+		for j, _ := range arrY[0] {
+			arrY[i][j] = y[i]
 		}
 	}
 
-	/*
-		 function [ img ] = Sh_M_orientation( cores, deltas, size_x, size_y )
-		for a=(1:size_y)
-		for b = (1:size_x)
-		sum_c = 0;
-		sum_d = 0;
-		z = 0;
-			for c = (1:size(cores,1))
-				if(((size_y-a)==cores(c,2))&(b==cores(c,1)))
-					z=1;
-				end
-			end
-
-		for c = (1:size(deltas,1))
-			if(((size_y-a)==deltas(c,2))&(b==deltas(c,1)))
-				z=1;
-			end
-		end
-
-		//-
-
-		line(b)=0;
-
-		end
-
-		end
-
-		if (a==1)
-
-		img = line;
-
-		else
-
-		img = cat(1, img, line);
-
-		end
-
-		end
-
-		end
-	*/
-
-	return nil
+	return arrX, arrY
 }
+
+/*
+def gabor(sigma, theta, Lambda, psi, gamma):
+    sigma_x = sigma
+    sigma_y = float(sigma) / gamma
+	# Bounding box
+    nstds = 3  # Number of standard deviation sigma
+
+    xmax = max(abs(nstds * sigma_x * np.cos(theta)), abs(nstds * sigma_y * np.sin(theta)))
+    xmax = np.ceil(max(1, xmax))
+
+    ymax = max(abs(nstds * sigma_x * np.sin(theta)), abs(nstds * sigma_y * np.cos(theta)))
+    ymax = np.ceil(max(1, ymax))
+    xmin = -xmax
+    ymin = -ymax
+
+    (y, x) = np.meshgrid(np.arange(ymin, ymax + 1), np.arange(xmin, xmax + 1))
+
+    # Rotation
+    x_theta = x * np.cos(theta) + y * np.sin(theta)
+    y_theta = -x * np.sin(theta) + y * np.cos(theta)
+
+    gb = np.exp(-.5 * (x_theta ** 2 / sigma_x ** 2 + y_theta ** 2 / sigma_y ** 2)) * np.cos(2 * np.pi / Lambda * x_theta + psi)
+    return gb
+*/
