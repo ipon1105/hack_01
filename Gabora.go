@@ -32,6 +32,31 @@ func grayscale(img [][]Pixel) [][]int {
 	return bImg
 }
 
+// Фильтр Собеля
+func sobelay(img [][]int) [][]float64 {
+	var angleMatrix [][]float64
+
+	Gx := func(z []int) float64 {
+		return float64((z[6] + 2*z[7] + z[8]) - (z[0] + 2*z[1] + z[2]))
+	}
+	Gy := func(z []int) float64 {
+		return float64((z[2] + 2*z[5] + z[8]) - (z[0] + 2*z[3] + z[6]))
+	}
+
+	for i, _ := range img {
+		var angleVecor []float64
+		for j, _ := range img[0] {
+
+			template := getTripleVector(img, j, i)
+
+			angleVecor = append(angleVecor, math.Atan(Gy(template)/Gx(template)))
+		}
+
+		angleMatrix = append(angleMatrix, angleVecor)
+	}
+	return angleMatrix
+}
+
 // Константы для фильтра Габора
 //const lambda = float64(1)
 //const theta = float64(2)

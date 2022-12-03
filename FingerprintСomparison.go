@@ -175,7 +175,7 @@ func binarization(img [][]Pixel) [][]int {
 		var p []int
 		for _, col := range row {
 			if col.A == 0 {
-				p = append(p, 0)
+				p = append(p, 1)
 				continue
 			}
 
@@ -216,13 +216,15 @@ func deleteNoise(img [][]int) {
 			}
 		}
 	}
+
 }
 
 // Удаление пикселя по основному набору
 func deleteMain(img [][]int) int {
 	var count int = 0
+
 	for r := 1; r < len(img)-1; r++ {
-		for c := 1; c < len(img[r])-1; c++ {
+		for c := 1; c < len(img[0])-1; c++ {
 			if img[r][c] == 0 && check(getTripleVector(img, c, r)) {
 				img[r][c] = 1
 				count++
@@ -234,13 +236,19 @@ func deleteMain(img [][]int) int {
 
 // Проверка на удаление
 func getTripleVector(img [][]int, x int, y int) []int {
-	var a = make([]int, 9)
-	for r := y - 1; r < y+1; r++ {
-		for c := x - 1; c < x+1; c++ {
+	var (
+		index int   = 0
+		a     []int = make([]int, 9)
+	)
+
+	for r := y - 1; r <= y+1; r++ {
+		for c := x - 1; c <= x+1; c++ {
 			if r < 0 || r >= len(img) || c < 0 || c >= len(img[0]) {
-				a = append(a, 0)
+				a[index] = 0
+				index++
 			} else {
-				a = append(a, img[r][c])
+				a[index] = img[r][c]
+				index++
 			}
 		}
 	}
@@ -251,30 +259,31 @@ func getTripleVector(img [][]int, x int, y int) []int {
 func check(vector []int) bool {
 
 	// 4 шаблона
-	if templateCompare(vector, []int{1, 1, 0, 0, 1, 0}, []int{1, 2, 3, 4, 5, 7}) {
+	if vector[1] == 1 && vector[2] == 1 && vector[3] == 0 && vector[4] == 0 && vector[5] == 1 && vector[7] == 0 {
 		return true
 	}
-	if templateCompare(vector, []int{1, 1, 1, 0, 0, 0}, []int{0, 1, 3, 4, 5, 7}) {
+	if vector[0] == 1 && vector[1] == 1 && vector[3] == 1 && vector[4] == 0 && vector[5] == 0 && vector[7] == 0 {
 		return true
 	}
-	if templateCompare(vector, []int{0, 1, 0, 0, 1, 1}, []int{1, 3, 4, 5, 6, 7}) {
+	if vector[1] == 0 && vector[3] == 1 && vector[4] == 0 && vector[5] == 0 && vector[6] == 1 && vector[7] == 1 {
 		return true
 	}
-	if templateCompare(vector, []int{0, 0, 0, 1, 1, 1}, []int{1, 3, 4, 5, 7, 8}) {
+	if vector[1] == 0 && vector[3] == 0 && vector[4] == 0 && vector[5] == 1 && vector[7] == 1 && vector[8] == 1 {
 		return true
 	}
 
 	// 4 шаблона
-	if templateCompare(vector, []int{1, 1, 1, 0, 0, 0, 0}, []int{0, 1, 2, 3, 4, 5, 7}) {
+	if vector[0] == 1 && vector[1] == 1 && vector[2] == 1 && vector[3] == 0 && vector[4] == 0 && vector[5] == 0 && vector[7] == 0 {
 		return true
 	}
-	if templateCompare(vector, []int{1, 0, 1, 0, 0, 1, 0}, []int{0, 1, 3, 4, 5, 6, 7}) {
+	if vector[0] == 1 && vector[1] == 0 && vector[3] == 1 && vector[4] == 0 && vector[5] == 0 && vector[6] == 1 && vector[7] == 0 {
 		return true
 	}
-	if templateCompare(vector, []int{0, 0, 0, 0, 1, 1, 1}, []int{1, 3, 4, 5, 6, 7, 8}) {
+	if vector[1] == 0 && vector[3] == 0 && vector[4] == 0 && vector[5] == 0 && vector[6] == 1 && vector[7] == 1 && vector[8] == 1 {
 		return true
 	}
-	if templateCompare(vector, []int{0, 1, 0, 0, 1, 0, 1}, []int{1, 2, 3, 4, 5, 7, 8}) {
+	templateCompare(vector, []int{0, 1, 0, 0, 1, 0, 1}, []int{1, 2, 3, 4, 5, 7, 8})
+	if vector[1] == 0 && vector[2] == 1 && vector[3] == 0 && vector[4] == 0 && vector[5] == 1 && vector[7] == 0 && vector[8] == 1 {
 		return true
 	}
 
@@ -322,17 +331,20 @@ func intArrayEquals(a []int, b []int) bool {
 
 // Функция сравнения шаблона c вектором
 func templateCompare(vector []int, template []int, allowed []int) bool {
-	var count = 0
+	if len(template) != len(allowed) {
+		return false
+	}
 
-	for i, el := range vector {
+	count := 0
+
+	for i := 0; i < len(vector); i++ {
 		if i != allowed[count] {
 			continue
 		}
 
-		if el != template[count] {
+		if template[count] != vector[i] {
 			return false
 		}
-		count++
 	}
 
 	return true

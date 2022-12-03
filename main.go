@@ -96,21 +96,28 @@ func goroutina(branches []Coord, ends []Coord, start int, stop int, files []stri
 
 func main() {
 
-	//if true {
-	//	gabor(1, 1, 1, 1, 1)
-	//	return
-	//}
-
 	THREADS := MaxParallelism()
+	// THREADS := 1
 
 	targetFile, _ := os.Open("Датасет/Real/1__M_Left_index_finger.BMP")
 
 	pixelArr, _ := getPixels(targetFile)
-	var bBranches, bEnds = findPoints(binarization(pixelArr))
+	bImg := binarization(pixelArr)
+	skeletonization(bImg)
+	var bBranches, bEnds = findPoints(bImg)
 	bBranches, bEnds = delNoisePoint(bBranches, bEnds)
 
-	root := "Датасет/Real"
+	root := "Датасет/Altered/Altered-Hard"
 	files, err := FilePathWalkDir(root)
+
+	if false {
+		grayImage := grayscale(pixelArr)
+		sobelay(grayImage)
+		//fmt.Println(grayImage)
+		//fmt.Println()
+		//gabor(1, 1, 1, 1, 1)
+		return
+	}
 
 	if err != nil {
 		panic(err)
