@@ -96,7 +96,12 @@ func goroutina(branches []Coord, ends []Coord, start int, stop int, files []stri
 
 func main() {
 
-	THREADS := MaxParallelism() / 6
+	//if true {
+	//	gabor(1, 1, 1, 1, 1)
+	//	return
+	//}
+
+	THREADS := MaxParallelism()
 
 	targetFile, _ := os.Open("Датасет/Real/1__M_Left_index_finger.BMP")
 
