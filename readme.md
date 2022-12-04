@@ -22,7 +22,7 @@ filename := "Датасет/Real/1__M_Left_middle_finger.BMP"
 dir := "Датасет/Altered/Altered-Easy"
 ```
 
-Программа обладает 3-имя основными функциями, это fileToFileCompare, fileToDirCompare и dirToDirCompare.
+Программа обладает 3-имя основными функциями, это **fileToFileCompare**, **fileToDirCompare** и **dirToDirCompare**.
 
 ```Go
 // Функция сравнивает два файла
