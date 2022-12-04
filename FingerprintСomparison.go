@@ -6,10 +6,10 @@ const BINARY_RATION_G = float64(0.59)
 const BINARY_RATION_B = float64(0.11)
 
 // Константы для удаления повторений в радиусе
-const DEL_RANGE = int(5)
+var DEL_RANGE int = 2
 
 // Смещения для поиска точек
-const FIND_OFFSET = int(4)
+var FIND_OFFSET int = 4
 
 // Структура содержащая в себе два числа
 type Coord struct {
