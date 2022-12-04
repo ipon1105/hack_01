@@ -13,6 +13,9 @@ var minAccuracy float64 = 0.90000
 // Топ лучших в потоке
 const queue = 3
 
+// Подробно
+var moreInfo bool = false
+
 var wg sync.WaitGroup
 var mt sync.Mutex
 
@@ -74,7 +77,22 @@ func goroutina(branches []Coord, ends []Coord, start int, stop int, files []stri
 	return Info{answerArr[:], t1.Sub(t0)}
 }
 
-func start(filename string, serchdir string, threads int) []Info {
+func fileToFileCompare(target string, compare string) float64 {
+	targetFile, _ := os.Open(target)
+	compareFile, _ := os.Open(compare)
+
+	pixelTarget, _ := getPixels(targetFile)
+	pixelCompare, _ := getPixels(compareFile)
+
+	bImgTarget := binarization(pixelTarget)
+	skeletonization(bImgTarget)
+	var targetBranches, targetEnds = findPoints(bImgTarget)
+	targetBranches, targetEnds = delNoisePoint(targetBranches, targetEnds)
+
+	return specialPointCompare(targetBranches, targetEnds, binarization(pixelCompare))
+}
+
+func fileToDirCompare(filename string, serchdir string, threads int) []Info {
 
 	targetFile, _ := os.Open(filename)
 
@@ -116,34 +134,23 @@ func start(filename string, serchdir string, threads int) []Info {
 	wg.Wait()
 
 	return results
-
 }
 
-func dirToDirCompare(dirTarget string, dirCompare string, threads int) {
+func dirToDirCompare(dirTarget string, dirCompare string, threads int) [][]Info {
 	targetFiles, err := FilePathWalkDir(dirTarget)
 	if err != nil {
 		panic(err)
 	}
 
+	var infoList [][]Info
 	for _, target := range targetFiles {
-		results := start(target, dirCompare, threads)
-
-		for _, n := range results {
-			for _, m := range n.Queue {
-				if m.Accuracy > minAccuracy {
-					fmt.Printf("file %s like %s as %f\n", targetFiles, m.Filename, m.Accuracy)
-				}
-
-			}
-		}
+		infoList = append(infoList, fileToDirCompare(target, dirCompare, threads))
 	}
+	return infoList
 }
 
 func main() {
 	//Начальные параметры
-
-	// Подробно
-	moreInfo := false
 
 	// Файл для сравнения
 	filename := "Датасет/Real/1__M_Left_middle_finger.BMP"
@@ -159,7 +166,7 @@ func main() {
 	DEL_RANGE = 4
 	FIND_OFFSET = 5
 
-	results := start(filename, dir, threads)
+	results := fileToDirCompare(filename, dir, threads)
 
 	for _, n := range results {
 		for _, m := range n.Queue {
